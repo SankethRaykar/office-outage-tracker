@@ -227,3 +227,49 @@ body {
 .chart-card .kpi-title {
   margin-bottom: 1.5rem;
 }
+
+/* Toggle Switch */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s;
+}
+
+.toggle-container:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.toggle-switch {
+  width: 44px;
+  height: 24px;
+  border-radius: 24px;
+  background-color: #333;
+  position: relative;
+  transition: background-color 0.3s;
+}
+
+.toggle-switch.on {
+  background-color: var(--accent-blue);
+}
+
+.toggle-knob {
+  width: 18px;
+  height: 18px;
+  background-color: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-switch.on .toggle-knob {
+  transform: translateX(20px);
+}
