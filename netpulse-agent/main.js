@@ -1,6 +1,5 @@
 const { app, Tray, Menu, nativeImage } = require('electron');
 const ping = require('ping');
-const Speedtest = require('speedtest-net');
 const { logStatus, logTicket } = require('./firebase');
 const os = require('os');
 
@@ -46,24 +45,34 @@ async function performHybridPulse() {
     isOffline = false;
 
     // Step 2: High Latency Trigger for Speed Test
-    // Only run the heavy bandwidth test if latency is suspiciously high (>150ms)
     if (pingResult.time !== 'unknown' && pingResult.time > 150) {
-      console.log('High latency detected, running full speed test...');
+      console.log('High latency detected, running pure JS speed test...');
       
-      const speed = await Speedtest({ acceptLicense: true, acceptGdpr: true });
-      const downloadMbps = speed.download.bandwidth / 125000; // Convert bytes/sec to Mbps
-      const uploadMbps = speed.upload.bandwidth / 125000;
+      const startTime = Date.now();
+      // Download a 10MB test file from a fast CDN (e.g., Cloudflare/Hetzner)
+      const response = await fetch('https://speed.hetzner.de/100MB.bin', {
+        headers: { 'Range': 'bytes=0-10485760' } // Download first 10MB
+      });
       
-      console.log(`Speedtest Result: DL: ${downloadMbps.toFixed(2)} Mbps, UL: ${uploadMbps.toFixed(2)} Mbps`);
+      if (!response.ok) throw new Error('Speed test download failed');
       
-      // Threshold check: < 20 Mbps DL or < 10 Mbps UL
-      if (downloadMbps < 20 || uploadMbps < 10) {
+      const arrayBuffer = await response.arrayBuffer();
+      const endTime = Date.now();
+      
+      const durationInSeconds = (endTime - startTime) / 1000;
+      const bitsLoaded = arrayBuffer.byteLength * 8;
+      const speedBps = bitsLoaded / durationInSeconds;
+      const downloadMbps = speedBps / (1024 * 1024);
+      
+      console.log(`Speedtest Result: DL: ${downloadMbps.toFixed(2)} Mbps`);
+      
+      if (downloadMbps < 20) {
         console.log('Speeds below threshold. Generating ticket...');
         await logTicket({
           userId: USER_NAME,
           timestamp: Date.now(),
           type: 'Low Bandwidth',
-          message: `Speed dropped below threshold. DL: ${downloadMbps.toFixed(2)} Mbps, UL: ${uploadMbps.toFixed(2)} Mbps`
+          message: `Download Speed dropped below 20 Mbps threshold. Recorded DL: ${downloadMbps.toFixed(2)} Mbps`
         });
       }
     } else {
