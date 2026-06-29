@@ -1,85 +1,51 @@
 # NetPulse
 
-NetPulse is a lightweight, real-time internet and network reporting dashboard designed for quick outage logging and organizational health monitoring. 
+NetPulse is an enterprise-grade network monitoring system that tracks your organization's internet uptime and bandwidth performance. It uses a decentralized architecture consisting of background desktop agents and a centralized real-time admin dashboard.
 
-## 🚀 Features
+## System Architecture (V2)
 
-- **One-Touch Reporting**: Employees can instantly report network outages with a single click.
-- **Real-Time Stopwatch**: Active downtime is tracked down to the millisecond using a live pulse stopwatch.
-- **User-Wise Tracking**: Input field to track exactly which employee or department is reporting the issue.
-- **Aggregated Dashboard**:
-  - **Total Incidents** & **Cumulative Downtime** KPI cards.
-  - **Health Trend**: Duration trend bar chart for all incidents.
-  - **Incidents by User**: Identifies who is experiencing the most outages.
-- **Premium UI**: Deep dark mode optimized with glassmorphism, dynamic gradients, and smooth micro-animations.
+The system is split into three main components:
+1. **NetPulse Agent (`/netpulse-agent`)**: A lightweight, background Node.js process that runs on employee machines. It performs a "Hybrid Pulse":
+   - Every 5 minutes, it sends a lightweight ping to verify connection without draining bandwidth.
+   - If latency spikes, it triggers a heavy Javascript Speed Test.
+   - If speeds drop below 20 Mbps (Download) or 10 Mbps (Upload), it logs a ticket.
+   - If the internet goes offline completely, it logs an offline ticket as soon as the connection is restored.
+2. **Admin Dashboard (React)**: A real-time command center that admins use to monitor live tickets and identify which employees are experiencing the most downtime.
+3. **Firebase Cloud Database**: The central real-time database (Firestore) that connects the agents to the dashboard.
 
-## 🛠️ Tech Stack
+## Quick Start Setup
 
-- **Frontend Framework**: React 18
-- **Build Tool**: Vite
-- **Styling**: Vanilla CSS (Premium Glassmorphism)
-- **Icons**: Lucide React
-- **Data Visualization**: Recharts
+### 1. Firebase Configuration
+NetPulse requires a free Google Firebase Firestore database to sync data.
+1. Create a project at [console.firebase.google.com](https://console.firebase.google.com/).
+2. Register a Web App to get your Firebase configuration keys.
+3. Create a **Firestore Database** and start it in **Test Mode**.
+4. Paste your configuration keys into the following two files:
+   - `src/firebase.js` (For the Dashboard)
+   - `netpulse-agent/firebase.js` (For the Background Agent)
 
-## 📦 Getting Started (Local Development)
+### 2. Running the Admin Dashboard
+The dashboard is built with React and Vite. To run it locally:
+```bash
+npm install
+npm run dev
+```
+Open `http://localhost:5173` in your browser.
 
-### Prerequisites
+### 3. Running the NetPulse Agent
+The agent is a Node.js process that runs silently in your terminal.
+```bash
+cd netpulse-agent
+npm install
+node main.js
+```
 
-- Node.js (v18 or higher)
-- npm or yarn
+## Production Deployment (Cloudflare Pages)
 
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone <your-repo-url>
-   cd netpulse
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
----
-
-## 🔒 Restricting Access to Office Employees (Cloudflare Method)
-
-This project can be easily deployed and restricted so that **only employees connected to your office Wi-Fi** can access it. We recommend using **Cloudflare Pages** and their free Web Application Firewall (WAF).
-
-### Step 1: Deploy for Free on Cloudflare Pages
-1. Push this repository to GitHub.
-2. Sign up for a free [Cloudflare](https://dash.cloudflare.com/) account.
-3. Navigate to **Workers & Pages** -> **Create application** -> **Pages** -> **Connect to Git**.
-4. Select your NetPulse repository.
-5. In the build settings:
-   - **Framework preset**: `Create React App` or `Vite`
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-6. Click **Save and Deploy**. Your site is now live!
-
-### Step 2: Lock it down to your Office IP Address
-Now, we will block everyone on the internet from accessing it, *except* your office network.
-
-1. While connected to your office Wi-Fi, Google **"What is my IP"** and copy the public IP address.
-2. In the Cloudflare Dashboard, go to your account home and select the domain you deployed to (you can use the free `.pages.dev` domain).
-3. On the left sidebar, click **Security** -> **WAF** (Web Application Firewall).
-4. Click **Create firewall rule**.
-5. Give it a name (e.g., `Block Non-Office Access`).
-6. Set the rule to match:
-   - Field: **IP Source Address**
-   - Operator: **does not equal**
-   - Value: `[Paste your Office IP Address here]`
-7. Under **Choose action**, select **Block**.
-8. Click **Deploy firewall rule**.
-
-**Result:** Only users physically in your office (or on the company VPN) can access the application. Anyone else will receive an Access Denied error.
-
----
-
-## 📄 License
-
-This project is proprietary and confidential.
+To deploy the Admin Dashboard for your company admins:
+1. Connect this GitHub repository to [Cloudflare Pages](https://pages.cloudflare.com/).
+2. Build Settings:
+   - Framework preset: `Vite`
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+3. If you want to restrict access to only your office building, configure **Cloudflare WAF (Web Application Firewall)** to only allow your company's public IP address.

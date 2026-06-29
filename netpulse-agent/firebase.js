@@ -4,12 +4,12 @@ require('dotenv').config();
 
 // TO DO: The user must replace these placeholder values with their real Firebase Config from the Google Firebase Console.
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY || "YOUR_API_KEY",
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN || "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: process.env.FIREBASE_PROJECT_ID || "YOUR_PROJECT_ID",
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: process.env.FIREBASE_APP_ID || "1:123456789:web:abcdef"
+  apiKey: process.env.FIREBASE_API_KEY || "AIzaSyDisEtC8r_mJfky06XE9oJbfpAEbVxn6pA",
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN || "netpulse-tracker.firebaseapp.com",
+  projectId: process.env.FIREBASE_PROJECT_ID || "netpulse-tracker",
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "netpulse-tracker.firebasestorage.app",
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "142690960045",
+  appId: process.env.FIREBASE_APP_ID || "1:142690960045:web:fa7f08aac359ba037e3c24"
 };
 
 // Initialize Firebase only if API key is somewhat valid, else catch error to not crash the app entirely if unconfigured

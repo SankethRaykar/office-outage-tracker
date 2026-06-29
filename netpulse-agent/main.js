@@ -1,10 +1,8 @@
-const { app, Tray, Menu, nativeImage } = require('electron');
 const ping = require('ping');
 const { logStatus, logTicket } = require('./firebase');
 const os = require('os');
 
 const USER_NAME = os.userInfo().username;
-let tray = null;
 let isOffline = false;
 
 // 5 Minutes interval
@@ -12,7 +10,7 @@ const PING_INTERVAL_MS = 5 * 60 * 1000;
 const PING_TARGET = '8.8.8.8'; // Reliable target to test internet
 
 async function performHybridPulse() {
-  console.log(`[${new Date().toISOString()}] Running Hybrid Pulse...`);
+  console.log(`\n[${new Date().toISOString()}] Running Hybrid Pulse...`);
   
   try {
     // Step 1: Lightweight Ping
@@ -49,7 +47,7 @@ async function performHybridPulse() {
       console.log('High latency detected, running pure JS speed test...');
       
       const startTime = Date.now();
-      // Download a 10MB test file from a fast CDN (e.g., Cloudflare/Hetzner)
+      // Download a 10MB test file from a fast CDN
       const response = await fetch('https://speed.hetzner.de/100MB.bin', {
         headers: { 'Range': 'bytes=0-10485760' } // Download first 10MB
       });
@@ -83,27 +81,11 @@ async function performHybridPulse() {
   }
 }
 
-app.whenReady().then(() => {
-  // Create an invisible icon for the System Tray
-  const icon = nativeImage.createEmpty();
-  tray = new Tray(icon);
-  
-  const contextMenu = Menu.buildFromTemplate([
-    { label: `NetPulse Agent (Running as ${USER_NAME})`, enabled: false },
-    { type: 'separator' },
-    { label: 'Run Manual Diagnostic', click: () => performHybridPulse() },
-    { label: 'Quit', click: () => { app.quit(); } }
-  ]);
-  
-  tray.setToolTip('NetPulse Agent');
-  tray.setContextMenu(contextMenu);
+console.log(`=========================================`);
+console.log(`NetPulse Agent started for: ${USER_NAME}`);
+console.log(`Press Ctrl+C to stop the agent.`);
+console.log(`=========================================\n`);
 
-  // Start polling
-  performHybridPulse();
-  setInterval(performHybridPulse, PING_INTERVAL_MS);
-});
-
-// Hide dock icon on macOS to keep it strictly background
-if (app.dock) {
-  app.dock.hide();
-}
+// Start polling
+performHybridPulse();
+setInterval(performHybridPulse, PING_INTERVAL_MS);
