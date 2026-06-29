@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 // TO DO: The user must replace these placeholder values with their real Firebase Config from the Google Firebase Console.
 const firebaseConfig = {
@@ -12,11 +13,13 @@ const firebaseConfig = {
 };
 
 let db = null;
+let auth = null;
 try {
   const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
+  auth = getAuth(app);
 } catch (err) {
   console.warn("Firebase not configured for Dashboard yet.", err);
 }
 
-export { db };
+export { db, auth };

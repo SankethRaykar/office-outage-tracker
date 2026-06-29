@@ -1,4 +1,5 @@
 const ping = require('ping');
+const notifier = require('node-notifier');
 const { logStatus, logTicket } = require('./firebase');
 const os = require('os');
 
@@ -30,6 +31,10 @@ async function performHybridPulse() {
       if (!isOffline) {
         isOffline = true;
         console.log('Internet disconnected. Logging Ticket...');
+        notifier.notify({
+          title: 'NetPulse Monitor',
+          message: 'Internet disconnected! A ticket has been raised with IT.'
+        });
         await logTicket({
           userId: USER_NAME,
           timestamp: Date.now(),
@@ -66,6 +71,10 @@ async function performHybridPulse() {
       
       if (downloadMbps < 20) {
         console.log('Speeds below threshold. Generating ticket...');
+        notifier.notify({
+          title: 'NetPulse Monitor',
+          message: `Network speed dropped (${downloadMbps.toFixed(1)} Mbps). IT has been notified!`
+        });
         await logTicket({
           userId: USER_NAME,
           timestamp: Date.now(),

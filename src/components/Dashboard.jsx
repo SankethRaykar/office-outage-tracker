@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
+import { Download } from 'lucide-react';
 
 const Dashboard = () => {
   const [outages, setOutages] = useState([]);
@@ -53,13 +54,44 @@ const Dashboard = () => {
 
   const userChartData = generateUserChartData();
 
+  const exportToCSV = () => {
+    if (outages.length === 0) return;
+    const headers = "ID,Employee Name,Type,Time,Message\n";
+    const rows = outages.map(ticket => {
+      const name = (ticket.userId || ticket.userName || 'Unknown').replace(/,/g, '');
+      const type = ticket.type;
+      const time = new Date(ticket.timestamp).toLocaleString().replace(/,/g, '');
+      const msg = (ticket.message || '').replace(/,/g, '');
+      return `${ticket.id},${name},${type},${time},${msg}`;
+    }).join("\n");
+    
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", `NetPulse_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return <div style={{ color: '#fff' }}>Loading Live Data from Agents...</div>;
   }
 
   return (
     <div className="dashboard-container">
-      <h2 className="dashboard-header">Live Organization Health</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h2 className="dashboard-header" style={{ marginBottom: 0 }}>Live Organization Health</h2>
+        <button 
+          onClick={exportToCSV}
+          disabled={outages.length === 0}
+          style={{
+            background: 'var(--accent-blue)', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', cursor: outages.length === 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold'
+          }}
+        >
+          <Download size={18} /> Export CSV Report
+        </button>
+      </div>
       
       <div className="kpi-grid">
         <div className="glass-card kpi-card">
