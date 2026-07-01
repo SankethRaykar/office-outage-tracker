@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Download } from 'lucide-react';
 
@@ -20,7 +20,14 @@ const Dashboard = () => {
       return;
     }
 
-    const q = query(collection(db, 'tickets'), orderBy('timestamp', 'desc'));
+    // Only pull tickets from the last 24 hours to clear the UI automatically
+    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+    const q = query(
+      collection(db, 'tickets'), 
+      where('timestamp', '>=', twentyFourHoursAgo),
+      orderBy('timestamp', 'desc')
+    );
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const ticketsData = [];
       snapshot.forEach((doc) => {

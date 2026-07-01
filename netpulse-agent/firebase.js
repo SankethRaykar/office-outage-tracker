@@ -21,23 +21,29 @@ try {
   console.warn("Firebase not properly configured. Data will not be uploaded.", err.message);
 }
 
-async function logStatus(statusData) {
+async function logStatus(data) {
   if (!db) return;
   try {
-    const docRef = await addDoc(collection(db, "logs"), statusData);
-    console.log("Status logged to Firebase with ID: ", docRef.id);
+    const docRef = await addDoc(collection(db, 'logs'), {
+      ...data,
+      expireAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // TTL deletion after 24 hours
+    });
+    console.log('Status logged to Firebase with ID: ', docRef.id);
   } catch (e) {
-    console.error("Error adding status log: ", e);
+    console.error('Error adding status log: ', e);
   }
 }
 
-async function logTicket(ticketData) {
+async function logTicket(data) {
   if (!db) return;
   try {
-    const docRef = await addDoc(collection(db, "tickets"), ticketData);
-    console.log("Ticket generated in Firebase with ID: ", docRef.id);
+    const docRef = await addDoc(collection(db, 'tickets'), {
+      ...data,
+      expireAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // TTL deletion after 24 hours
+    });
+    console.log('Ticket logged to Firebase with ID: ', docRef.id);
   } catch (e) {
-    console.error("Error generating ticket: ", e);
+    console.error('Error adding ticket: ', e);
   }
 }
 
