@@ -11,7 +11,8 @@ function checkVPN() {
   for (const name of Object.keys(interfaces)) {
     const lowerName = name.toLowerCase();
     if (lowerName.includes('vpn') || lowerName.includes('tun') || lowerName.includes('tap') || 
-        lowerName.includes('wireguard') || lowerName.includes('cisco') || lowerName.includes('openvpn')) {
+        lowerName.includes('wireguard') || lowerName.includes('cisco') || lowerName.includes('openvpn') ||
+        lowerName.includes('nord') || lowerName.includes('express')) {
       // Return true if any adapter is active (has an IPv4 address)
       const isUp = interfaces[name].some(iface => iface.family === 'IPv4' && !iface.internal);
       if (isUp) return true;
@@ -20,26 +21,30 @@ function checkVPN() {
   return false;
 }
 
-// 5 Minutes interval
-const PING_INTERVAL_MS = 5 * 60 * 1000;
+// Timers
+const CONTINUOUS_CHECK_MS = 10 * 1000; // 10 Seconds continuous monitor
+const STATUS_LOG_INTERVAL_MS = 5 * 60 * 1000; // 5 Minutes routine DB log
+let lastStatusLogTime = 0;
+
 const PING_TARGET = '8.8.8.8'; // Reliable target to test internet
 
 async function performHybridPulse() {
-  console.log(`\n[${new Date().toISOString()}] Running Hybrid Pulse...`);
-  
   try {
     // Step 1: Lightweight Ping
     const pingResult = await ping.promise.probe(PING_TARGET, { timeout: 3 });
+    const now = Date.now();
     
-    const statusLog = {
-      userId: USER_NAME,
-      timestamp: Date.now(),
-      latency: pingResult.alive ? pingResult.time : null,
-      status: pingResult.alive ? 'Online' : 'Offline'
-    };
-
-    // Log to Firebase
-    await logStatus(statusLog);
+    // Only send the routine "Online" status to the database every 5 minutes to prevent spam/costs
+    if (now - lastStatusLogTime >= STATUS_LOG_INTERVAL_MS) {
+      const statusLog = {
+        userId: USER_NAME,
+        timestamp: now,
+        latency: pingResult.alive ? pingResult.time : null,
+        status: pingResult.alive ? 'Online' : 'Offline'
+      };
+      await logStatus(statusLog);
+      lastStatusLogTime = now;
+    }
 
     if (!pingResult.alive) {
       if (!isOffline) {
@@ -60,7 +65,10 @@ async function performHybridPulse() {
       return; // Skip speed test if offline
     }
     
-    isOffline = false;
+    if (isOffline) {
+      isOffline = false;
+      console.log('Internet reconnected.');
+    }
 
     // Step 2: High Latency Trigger for Speed Test
     if (pingResult.time !== 'unknown' && pingResult.time > 150) {
@@ -113,4 +121,4 @@ console.log(`=========================================\n`);
 
 // Start polling
 performHybridPulse();
-setInterval(performHybridPulse, PING_INTERVAL_MS);
+setInterval(performHybridPulse, CONTINUOUS_CHECK_MS);
