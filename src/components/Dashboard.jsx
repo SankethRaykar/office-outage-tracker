@@ -20,11 +20,14 @@ const Dashboard = () => {
       return;
     }
 
-    // Only pull tickets from the last 24 hours to clear the UI automatically
-    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+    // Only pull tickets from TODAY (resets at midnight) to keep the UI clean
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const startOfDayTimestamp = startOfDay.getTime();
+    
     const q = query(
       collection(db, 'tickets'), 
-      where('timestamp', '>=', twentyFourHoursAgo),
+      where('timestamp', '>=', startOfDayTimestamp),
       orderBy('timestamp', 'desc')
     );
     
