@@ -6,6 +6,20 @@ const os = require('os');
 const USER_NAME = os.userInfo().username;
 let isOffline = false;
 
+function checkVPN() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('vpn') || lowerName.includes('tun') || lowerName.includes('tap') || 
+        lowerName.includes('wireguard') || lowerName.includes('cisco') || lowerName.includes('openvpn')) {
+      // Return true if any adapter is active (has an IPv4 address)
+      const isUp = interfaces[name].some(iface => iface.family === 'IPv4' && !iface.internal);
+      if (isUp) return true;
+    }
+  }
+  return false;
+}
+
 // 5 Minutes interval
 const PING_INTERVAL_MS = 5 * 60 * 1000;
 const PING_TARGET = '8.8.8.8'; // Reliable target to test internet
@@ -35,11 +49,12 @@ async function performHybridPulse() {
           title: 'NetPulse Monitor',
           message: 'Internet disconnected! A ticket has been raised with IT.'
         });
+        const vpnActive = checkVPN();
         await logTicket({
           userId: USER_NAME,
           timestamp: Date.now(),
           type: 'Offline',
-          message: 'No internet connection detected.'
+          message: `No internet connection detected.${vpnActive ? ' [USER WAS ON VPN]' : ''}`
         });
       }
       return; // Skip speed test if offline
@@ -75,11 +90,12 @@ async function performHybridPulse() {
           title: 'NetPulse Monitor',
           message: `Network speed dropped (${downloadMbps.toFixed(1)} Mbps). IT has been notified!`
         });
+        const vpnActive = checkVPN();
         await logTicket({
           userId: USER_NAME,
           timestamp: Date.now(),
           type: 'Low Bandwidth',
-          message: `Download Speed dropped below 20 Mbps threshold. Recorded DL: ${downloadMbps.toFixed(2)} Mbps`
+          message: `Download Speed dropped below 20 Mbps threshold. Recorded DL: ${downloadMbps.toFixed(2)} Mbps.${vpnActive ? ' [USER WAS ON VPN]' : ''}`
         });
       }
     } else {
